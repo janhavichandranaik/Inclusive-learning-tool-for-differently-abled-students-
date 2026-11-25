@@ -7,9 +7,10 @@ import {
   XCircle,
   ArrowRight,
 } from 'lucide-react';
-import { QuizQuestion } from '../types';
+import { AppLanguage, QuizQuestion } from '../types';
 
 interface QuizEngineProps {
+  language?: AppLanguage;
   lessonId: string;
   lessonTitle: string;
   questions: QuizQuestion[];
@@ -23,6 +24,7 @@ interface QuizEngineProps {
 }
 
 export const QuizEngine: React.FC<QuizEngineProps> = ({
+  language = 'en',
   lessonId,
   lessonTitle,
   questions,
@@ -55,17 +57,23 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({
 
   const handleReadQuestionAloud = () => {
     if (!currentQuestion) return;
+    const optionLabel = language === 'kn' ? 'ಆಯ್ಕೆ' : language === 'hi' ? 'विकल्प' : 'Option';
     const optionsSpeech = currentQuestion.options
-      .map((opt, idx) => `Option ${idx + 1}: ${opt}`)
+      .map((opt, idx) => `${optionLabel} ${idx + 1}: ${opt}`)
       .join('. ');
-    speak(
-      `Question ${currentIndex + 1} of ${questions.length}. ${currentQuestion.prompt}. ${optionsSpeech}`,
-      {
-        id: `quiz-q-${currentQuestion.id}`,
-        rate: ttsRate,
-        voiceURI: ttsVoiceURI,
-      }
-    );
+
+    const headerSpeech =
+      language === 'kn'
+        ? `ಪ್ರಶ್ನೆ ${currentIndex + 1}, ಒಟ್ಟು ${questions.length} ಪ್ರಶ್ನೆಗಳು.`
+        : language === 'hi'
+        ? `प्रश्न ${currentIndex + 1}, कुल ${questions.length} प्रश्न।`
+        : `Question ${currentIndex + 1} of ${questions.length}.`;
+
+    speak(`${headerSpeech} ${currentQuestion.prompt}. ${optionsSpeech}`, {
+      id: `quiz-q-${currentQuestion.id}`,
+      rate: ttsRate,
+      voiceURI: ttsVoiceURI,
+    });
   };
 
   const handleSubmitAnswer = () => {
@@ -144,12 +152,15 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() =>
-                speak(
-                  `Quiz complete for ${lessonTitle}. You scored ${correctCount} out of ${questions.length}, which is ${percent} percent.`,
-                  { rate: ttsRate, voiceURI: ttsVoiceURI }
-                )
-              }
+              onClick={() => {
+                const resultSpeech =
+                  language === 'kn'
+                    ? `${lessonTitle} ರಸಪ್ರಶ್ನೆ ಪೂರ್ಣಗೊಂಡಿದೆ. ನೀವು ${questions.length} ರಲ್ಲಿ ${correctCount} ಅಂಕಗಳನ್ನು ಪಡೆದಿದ್ದೀರಿ, ಶೇಕಡಾ ${percent}.`
+                    : language === 'hi'
+                    ? `${lessonTitle} क्विज़ पूरा हुआ। आपने ${questions.length} में से ${correctCount} सही उत्तर दिए, यानी ${percent} प्रतिशत।`
+                    : `Quiz complete for ${lessonTitle}. You scored ${correctCount} out of ${questions.length}, which is ${percent} percent.`;
+                speak(resultSpeech, { rate: ttsRate, voiceURI: ttsVoiceURI });
+              }}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-semibold whitespace-nowrap shrink-0 cursor-pointer"
               style={{
                 backgroundColor: 'var(--bg-surface-alt)',

@@ -1,9 +1,19 @@
 import React, { useState } from 'react';
-import { Award, BookCheck, Clock, Download, RotateCcw, Volume2 } from 'lucide-react';
+import { Award, BookCheck, Check, Clock, FileDown, FileText, RotateCcw, Share2, Volume2 } from 'lucide-react';
 import { LESSONS, SUBJECTS } from '../data/curriculum';
-import { ProgressState } from '../types';
+import { getLocalizedLesson, getLocalizedSubject } from '../data/multilingualMaterials';
+import { TRANSLATIONS } from '../i18n/translations';
+import { AccessibilityProfileMode, AppLanguage, ProgressState, StudentProfile } from '../types';
+import {
+  buildTextProgressSummary,
+  downloadPdfProgressReport,
+  downloadTextProgressReport,
+} from '../utils/progressReportGenerator';
 
 interface ProgressTrackerProps {
+  student?: StudentProfile | null;
+  profileMode?: AccessibilityProfileMode;
+  language?: AppLanguage;
   progress: ProgressState;
   completedCount: number;
   totalLessons: number;
@@ -19,6 +29,9 @@ interface ProgressTrackerProps {
 }
 
 export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
+  student = null,
+  profileMode = 'balanced',
+  language = 'en',
   progress,
   completedCount,
   totalLessons,
@@ -32,44 +45,88 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
   ttsVoiceURI,
   announce,
 }) => {
+  const t = TRANSLATIONS[language];
   const [confirmReset, setConfirmReset] = useState(false);
+  const [exportStatus, setExportStatus] = useState('');
+  const [copiedSummary, setCopiedSummary] = useState(false);
 
-  const handleExportReport = () => {
-    const lines = [
-      'ClarityLearn — Student Learning Progress Summary',
-      `Generated: ${new Date().toLocaleString()}`,
-      `Overall Mastery: ${overallPercent}% (${completedCount}/${totalLessons} lessons completed)`,
-      `Average Quiz Score: ${averageQuizScore}% across ${quizzesCompletedCount} completed quizzes`,
-      '',
-      'Subject & Lesson Breakdown:',
-      ...LESSONS.map((lesson) => {
-        const rec = progress.lessons[lesson.id];
-        const status = rec?.completed ? 'Completed' : 'In Progress / Not Started';
-        const score = typeof rec?.bestQuizScore === 'number' ? `${rec.bestQuizScore}%` : 'No quiz attempt';
-        return `- ${lesson.title} | Status: ${status} | Best Quiz: ${score}`;
-      }),
-    ];
-    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'claritylearn-progress-report.txt';
-    a.click();
-    URL.revokeObjectURL(url);
-    announce('Progress report downloaded');
+  const reportCtx = {
+    student,
+    language,
+    profileMode,
+    progress,
+    completedCount,
+    totalLessons,
+    quizzesCompletedCount,
+    averageQuizScore,
+    overallPercent,
   };
 
-  const summarySpeech = `Your overall learning progress is ${overallPercent} percent. You have completed ${completedCount} out of ${totalLessons} lessons, and your average quiz accuracy is ${averageQuizScore} percent.`;
+  const handleDownloadPdf = () => {
+    try {
+      downloadPdfProgressReport(reportCtx);
+      setExportStatus('PDF progress report downloaded. Ready to attach for teachers or parents.');
+      announce('PDF progress report downloaded');
+    } catch {
+      setExportStatus('Unable to generate PDF in this browser. Try downloading the text summary instead.');
+      announce('PDF download failed');
+    }
+  };
+
+  const handleDownloadText = () => {
+    downloadTextProgressReport(reportCtx);
+    setExportStatus('Text progress summary downloaded (.txt).');
+    announce('Text progress summary downloaded');
+  };
+
+  const handleShareOrCopy = async () => {
+    const summaryText = buildTextProgressSummary(reportCtx);
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      try {
+        await navigator.share({
+          title: `${student?.name ?? 'Student'} — ClarityLearn Progress Report`,
+          text: summaryText,
+        });
+        setExportStatus('Shared learning progress summary.');
+        announce('Shared learning progress summary');
+        return;
+      } catch {
+        // Fall back to clipboard copy if share sheet was dismissed or unsupported
+      }
+    }
+
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(summaryText);
+        setCopiedSummary(true);
+        setExportStatus('Progress summary copied to clipboard. Paste it into an email or message for teachers or parents.');
+        announce('Progress summary copied to clipboard');
+        window.setTimeout(() => setCopiedSummary(false), 3000);
+        return;
+      } catch {
+        // Fallback below
+      }
+    }
+
+    handleDownloadText();
+  };
+
+  const summarySpeech =
+    language === 'kn'
+      ? `ನಿಮ್ಮ ಒಟ್ಟು ಕಲಿಕಾ ಪ್ರಗತಿ ಶೇಕಡಾ ${overallPercent} ಆಗಿದೆ. ನೀವು ಒಟ್ಟು ${totalLessons} ಪಾಠಗಳಲ್ಲಿ ${completedCount} ಪಾಠಗಳನ್ನು ಪೂರ್ಣಗೊಳಿಸಿದ್ದೀರಿ, ಮತ್ತು ನಿಮ್ಮ ಸರಾಸರಿ ರಸಪ್ರಶ್ನೆ ಅಂಕ ಶೇಕಡಾ ${averageQuizScore} ಆಗಿದೆ.`
+      : language === 'hi'
+      ? `आपकी कुल सीखने की प्रगति ${overallPercent} प्रतिशत है। आपने ${totalLessons} में से ${completedCount} पाठ पूरे किए हैं, और आपका औसत क्विज़ स्कोर ${averageQuizScore} प्रतिशत है।`
+      : `Your overall learning progress is ${overallPercent} percent. You have completed ${completedCount} out of ${totalLessons} lessons, and your average quiz accuracy is ${averageQuizScore} percent.`;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold text-balance" style={{ color: 'var(--text-primary)' }}>
-            Learning Progress Tracker
+            {t.progressTitle}
           </h2>
           <p className="mt-1 text-base" style={{ color: 'var(--text-secondary)' }}>
-            Track completed audio-visual lessons, quiz mastery across subjects, and recent study milestones.
+            Track completed audio-visual lessons, quiz mastery across subjects, and share reports with teachers or parents.
           </p>
         </div>
 
@@ -90,7 +147,20 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
 
           <button
             type="button"
-            onClick={handleExportReport}
+            onClick={handleDownloadPdf}
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer"
+            style={{
+              backgroundColor: 'var(--accent-primary)',
+              color: 'var(--accent-on-primary)',
+            }}
+          >
+            <FileDown className="w-4 h-4" aria-hidden="true" />
+            Download PDF Report
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDownloadText}
             className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg border text-sm font-semibold whitespace-nowrap shrink-0 cursor-pointer"
             style={{
               backgroundColor: 'var(--bg-surface-alt)',
@@ -98,8 +168,22 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
               color: 'var(--text-primary)',
             }}
           >
-            <Download className="w-4 h-4" aria-hidden="true" />
-            Export Report
+            <FileText className="w-4 h-4" aria-hidden="true" />
+            Download Text (.txt)
+          </button>
+
+          <button
+            type="button"
+            onClick={handleShareOrCopy}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg border text-sm font-semibold whitespace-nowrap shrink-0 cursor-pointer"
+            style={{
+              backgroundColor: 'var(--bg-surface-alt)',
+              borderColor: 'var(--border-hairline)',
+              color: 'var(--text-primary)',
+            }}
+          >
+            {copiedSummary ? <Check className="w-4 h-4" aria-hidden="true" /> : <Share2 className="w-4 h-4" aria-hidden="true" />}
+            {copiedSummary ? 'Copied Summary' : 'Share Summary'}
           </button>
 
           {!confirmReset ? (
@@ -151,6 +235,20 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
         </div>
       </div>
 
+      {exportStatus && (
+        <div
+          role="status"
+          className="rounded-xl border px-4 py-3 text-sm font-semibold"
+          style={{
+            backgroundColor: 'var(--success-bg)',
+            borderColor: 'var(--success-border)',
+            color: 'var(--success-text)',
+          }}
+        >
+          {exportStatus}
+        </div>
+      )}
+
       {/* 4-Column KPI Row */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
@@ -163,7 +261,7 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
           {
             label: 'Lessons Completed',
             value: `${completedCount}/${totalLessons}`,
-            sub: 'Across 4 inclusive subjects',
+            sub: `Across ${SUBJECTS.length} inclusive subjects`,
             icon: BookCheck,
           },
           {
@@ -220,7 +318,8 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
             Subject Progress
           </h3>
 
-          {SUBJECTS.map((subject) => {
+          {SUBJECTS.map((rawSubject) => {
+            const subject = getLocalizedSubject(rawSubject, language);
             const subjectLessons = LESSONS.filter((l) => l.subjectId === subject.id);
             const done = subjectLessons.filter((l) => progress.lessons[l.id]?.completed).length;
             const pct = Math.round((done / subjectLessons.length) * 100);
@@ -271,7 +370,8 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
                 </div>
 
                 <div className="flex flex-wrap gap-2 pt-1">
-                  {subjectLessons.map((lesson) => {
+                  {subjectLessons.map((rawLesson) => {
+                    const lesson = getLocalizedLesson(rawLesson, language);
                     const rec = progress.lessons[lesson.id];
                     return (
                       <button

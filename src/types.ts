@@ -1,4 +1,4 @@
-export type SubjectId = 'science' | 'math' | 'sign' | 'astronomy';
+export type SubjectId = 'languages' | 'science' | 'math' | 'sign' | 'astronomy';
 
 export type ContrastMode = 'standard' | 'hc-dark' | 'hc-light';
 
@@ -6,7 +6,30 @@ export type FontScale = 14 | 16 | 19 | 22;
 
 export type CaptionSize = 'medium' | 'large' | 'xlarge';
 
-export type NavView = 'subjects' | 'lesson' | 'sign-studio' | 'quiz-hub' | 'progress';
+export type AppLanguage = 'en' | 'kn' | 'hi';
+
+export type AccessibilityProfileMode = 'visual' | 'hearing' | 'balanced';
+
+export type NavView =
+  | 'home'
+  | 'login'
+  | 'mode-select'
+  | 'materials'
+  | 'audio-learning'
+  | 'lesson'
+  | 'sign-studio'
+  | 'ai-tutor'
+  | 'quiz-hub'
+  | 'progress';
+
+export interface StudentProfile {
+  name: string;
+  studentId: string;
+  gradeLevel: string;
+  preferredMode: AccessibilityProfileMode;
+  preferredLanguage: AppLanguage;
+  signedInAt: string;
+}
 
 export type SignPoseId =
   | 'welcome'
@@ -33,6 +56,12 @@ export type SignPoseId =
   | 'help';
 
 export type VisualSceneId =
+  | 'lang-kannada-vowels'
+  | 'lang-kannada-phrases'
+  | 'lang-english-grammar'
+  | 'lang-english-reading'
+  | 'lang-hindi-vowels'
+  | 'lang-hindi-phrases'
   | 'photosynthesis-light'
   | 'photosynthesis-roots'
   | 'photosynthesis-chloroplast'
@@ -128,6 +157,8 @@ export interface SignDictionaryItem {
 }
 
 export interface AccessibilitySettings {
+  language: AppLanguage;
+  profileMode: AccessibilityProfileMode;
   contrastMode: ContrastMode;
   fontSize: FontScale;
   extraSpacing: boolean;

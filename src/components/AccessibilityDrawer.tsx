@@ -165,13 +165,15 @@ export const AccessibilityDrawer: React.FC<AccessibilityDrawerProps> = ({
             <h3 className="text-sm font-bold">Text-to-Speech Narration</h3>
             <button
               type="button"
-              disabled={!isSpeechSupported}
-              onClick={() =>
-                speak(
-                  'ClarityLearn voice narration is active. Every lesson, transcript, and quiz can be read aloud.',
-                  { rate: settings.ttsRate, voiceURI: settings.ttsVoiceURI }
-                )
-              }
+              onClick={() => {
+                const sampleText =
+                  settings.language === 'kn'
+                    ? 'ಕ್ಲಾರಿಟಿ ಲರ್ನ್ ಧ್ವನಿ ನಿರೂಪಣೆ ಸಕ್ರಿಯವಾಗಿದೆ. ಪ್ರತಿ ಪಾಠ, ಲಿಖಿತ ಪ್ರತಿ ಮತ್ತು ರಸಪ್ರಶ್ನೆಯನ್ನು ನೀವು ಕನ್ನಡದಲ್ಲಿ ಕೇಳಬಹುದು.'
+                    : settings.language === 'hi'
+                    ? 'क्लैरिटी लर्न वॉइस कथन सक्रिय है। आप हर पाठ, ट्रांसक्रिप्ट और क्विज़ को हिन्दी में सुन सकते हैं।'
+                    : 'ClarityLearn voice narration is active. Every lesson, transcript, and quiz can be read aloud.';
+                speak(sampleText, { rate: settings.ttsRate, voiceURI: settings.ttsVoiceURI });
+              }}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer disabled:opacity-50"
               style={{
                 backgroundColor: 'var(--bg-surface-alt)',
