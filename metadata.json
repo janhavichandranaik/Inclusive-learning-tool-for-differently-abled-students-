@@ -1,0 +1,6 @@
+{
+  "name": "ClarityLearn",
+  "description": "Inclusive audio-visual learning platform adapted for students with visual or hearing impairments, featuring text-to-speech, high contrast modes, closed captions, sign language videos, transcripts, quizzes, and progress tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

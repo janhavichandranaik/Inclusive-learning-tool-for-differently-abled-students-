@@ -1,0 +1,164 @@
+@import "tailwindcss";
+
+:root {
+  --base-font-size: 16px;
+  --reader-line-height: 1.65;
+  --reader-letter-spacing: 0em;
+
+  /* Standard Calm Light Theme (60-30-10 neutral slate + high-legibility cobalt) */
+  --bg-canvas: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-alt: #f1f5f9;
+  --bg-stage: #0f172a;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --border-hairline: #cbd5e1;
+  --border-strong: #94a3b8;
+  --accent-primary: #0369a1;
+  --accent-primary-hover: #075985;
+  --accent-on-primary: #ffffff;
+  --accent-soft: #e0f2fe;
+  --focus-ring: #0284c7;
+  --success-text: #065f46;
+  --success-bg: #ecfdf5;
+  --success-border: #059669;
+  --error-text: #991b1b;
+  --error-bg: #fef2f2;
+  --error-border: #dc2626;
+  --warning-text: #92400e;
+  --warning-bg: #fffbeb;
+  --warning-border: #d97706;
+}
+
+:root[data-contrast="hc-dark"] {
+  --bg-canvas: #000000;
+  --bg-surface: #0a0a0a;
+  --bg-surface-alt: #141414;
+  --bg-stage: #000000;
+  --text-primary: #ffffff;
+  --text-secondary: #f1f5f9;
+  --text-muted: #e2e8f0;
+  --border-hairline: #ffffff;
+  --border-strong: #ffe600;
+  --accent-primary: #ffe600;
+  --accent-primary-hover: #fff04d;
+  --accent-on-primary: #000000;
+  --accent-soft: #262200;
+  --focus-ring: #00e5ff;
+  --success-text: #7ef7b4;
+  --success-bg: #032615;
+  --success-border: #7ef7b4;
+  --error-text: #ff9e9e;
+  --error-bg: #2e0707;
+  --error-border: #ff9e9e;
+  --warning-text: #ffe600;
+  --warning-bg: #292200;
+  --warning-border: #ffe600;
+}
+
+:root[data-contrast="hc-light"] {
+  --bg-canvas: #ffffff;
+  --bg-surface: #ffffff;
+  --bg-surface-alt: #f3f4f6;
+  --bg-stage: #000000;
+  --text-primary: #000000;
+  --text-secondary: #111827;
+  --text-muted: #1f2937;
+  --border-hairline: #000000;
+  --border-strong: #000000;
+  --accent-primary: #0000cc;
+  --accent-primary-hover: #000099;
+  --accent-on-primary: #ffffff;
+  --accent-soft: #e6e8ff;
+  --focus-ring: #b45309;
+  --success-text: #004d25;
+  --success-bg: #e6f9ef;
+  --success-border: #004d25;
+  --error-text: #8c0000;
+  --error-bg: #fdeaea;
+  --error-border: #8c0000;
+  --warning-text: #663c00;
+  --warning-bg: #fff5cc;
+  --warning-border: #663c00;
+}
+
+html {
+  font-size: var(--base-font-size);
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
+  line-height: var(--reader-line-height);
+  letter-spacing: var(--reader-letter-spacing);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+.font-display {
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+}
+
+.font-mono-tabular {
+  font-family: "JetBrains Mono", monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+/* High-visibility keyboard focus indicator */
+*:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Skip link for screen readers & keyboard users */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  padding: 0.75rem 1.25rem;
+  background-color: var(--accent-primary);
+  color: var(--accent-on-primary);
+  font-weight: 700;
+  border-radius: 0.5rem;
+}
+
+.skip-link:focus {
+  left: 1rem;
+  top: 1rem;
+}
+
+/* Reduced motion preference or explicit toggle */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+:root[data-reduced-motion="true"] *,
+:root[data-reduced-motion="true"] *::before,
+:root[data-reduced-motion="true"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
